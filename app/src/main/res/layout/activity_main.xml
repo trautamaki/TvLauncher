@@ -9,6 +9,25 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
 
+    <LinearLayout
+        android:id="@+id/notification_area"
+        android:orientation="horizontal"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingTop="24dp"
+        android:paddingLeft="48dp"
+        android:paddingRight="48dp"
+        android:paddingBottom="48dp"
+        android:visibility="gone"
+        android:clipToPadding="false">
+        <org.lineageos.tv.launcher.view.ActionNotification
+            android:id="@+id/no_internet_notification"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/no_internet_connection"
+            android:src="@drawable/ic_dead" />
+    </LinearLayout>
+
     <androidx.leanback.widget.VerticalGridView
         android:id="@+id/main_vertical_grid"
         android:layout_width="match_parent"

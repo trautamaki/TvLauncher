@@ -2,11 +2,20 @@ package org.lineageos.tv.launcher
 
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
+import android.net.ConnectivityManager
+import android.net.Network
+import android.net.NetworkCapabilities
 import android.os.Bundle
+import android.provider.Settings
+import android.util.Log
+import android.view.View
 import android.widget.ImageButton
+import android.widget.LinearLayout
+import androidx.appcompat.content.res.AppCompatResources
 import androidx.leanback.widget.VerticalGridView
 import androidx.tvprovider.media.tv.BasePreviewProgram
 import androidx.tvprovider.media.tv.PreviewChannel
@@ -21,6 +30,7 @@ import org.lineageos.tv.launcher.receiver.PackageReceiver
 import org.lineageos.tv.launcher.utils.AppManager
 import org.lineageos.tv.launcher.utils.Suggestions
 import org.lineageos.tv.launcher.utils.Suggestions.orderSuggestions
+import org.lineageos.tv.launcher.view.ActionNotification
 
 
 class MainActivity : Activity() {
@@ -132,6 +142,27 @@ class MainActivity : Activity() {
         intentFilter.addAction(Intent.ACTION_PACKAGE_FULLY_REMOVED)
         intentFilter.addDataScheme("package")
         registerReceiver(PackageReceiver(), intentFilter)
+
+
+        val notificationArea: LinearLayout = findViewById(R.id.notification_area)
+        val internetNotification: ActionNotification = findViewById(R.id.no_internet_notification)
+        internetNotification.setAction(Intent(Settings.ACTION_WIFI_SETTINGS))
+
+        val cm = this.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        cm.registerDefaultNetworkCallback(object : ConnectivityManager.NetworkCallback() {
+            override fun onAvailable(network: Network) {
+                runOnUiThread {
+                    Log.e("test", "wifi available")
+                    notificationArea.visibility = View.GONE
+                }
+            }
+            override fun onLost(network: Network) {
+                runOnUiThread {
+                    Log.e("test", "wifi unavailable")
+                    notificationArea.visibility = View.VISIBLE
+                }
+            }
+        })
     }
 
     private fun onPackageInstalled(packageName: String) {
@@ -235,5 +266,15 @@ class MainActivity : Activity() {
             val pos = mMainVerticalAdapter.findChannelIndex(channelId)
             mMainVerticalGridView.layoutManager?.scrollToPosition(pos)
         }
+    }
+
+    private fun isNetworkAvailable(): Boolean {
+        val connectivityManager = getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
+        val capabilities =
+            connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)
+        return capabilities != null
+                && capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) && capabilities.hasCapability(
+            NetworkCapabilities.NET_CAPABILITY_VALIDATED
+        )
     }
 }
