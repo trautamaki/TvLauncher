@@ -79,4 +79,10 @@ class MainVerticalAdapter(
         Collections.swap(mRowList, from, to)
         notifyItemMoved(from, to)
     }
+
+    fun addItems(mainItems: ArrayList<Pair<Long, org.lineageos.tv.launcher.model.MainRowItem>>) {
+        for (item in mainItems) {
+            addItem(item)
+        }
+    }
 }
