@@ -40,19 +40,42 @@ class MainActivity : FragmentActivity(R.layout.activity_main) {
     private val appsAdapter by lazy { AppsAdapter(this@MainActivity) }
 
     private lateinit var channels: List<PreviewChannel>
+    private val hiddenChannels by lazy { Suggestions.getHiddenChannels(this) }
 
     @SuppressLint("RestrictedApi")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        if (checkCallingOrSelfPermission(TvContractCompat.PERMISSION_READ_TV_LISTINGS) != PackageManager.PERMISSION_GRANTED) {
-            requestPermissions(arrayOf(TvContractCompat.PERMISSION_READ_TV_LISTINGS), 0)
+        // Get items that don't need special permissions
+        val mainItems = ArrayList<Pair<Long, MainRowItem>>()
+        // Add favorites-row. Can't be hidden
+        mainItems.add(
+            Pair(
+                Channel.FAVORITE_APPS_ID,
+                MainRowItem(getString(R.string.favorites), favoritesAdapter)
+            )
+        )
+
+        // Add All apps -row
+        val allAppsAdapter = AppsAdapter(this@MainActivity)
+        if (Channel.ALL_APPS_ID !in hiddenChannels) {
+            mainItems.add(
+                Pair(
+                    Channel.ALL_APPS_ID,
+                    MainRowItem(getString(R.string.other_apps), allAppsAdapter)
+                )
+            )
         }
 
-        lifecycleScope.launch {
-            val mainItems = getMainRows()
-            mainVerticalAdapter = MainVerticalAdapter(this@MainActivity, mainItems)
-            mainVerticalGridView.adapter = mainVerticalAdapter
+        mainVerticalAdapter = MainVerticalAdapter(
+            this,
+            mainItems.orderSuggestions(Suggestions.getChannelOrder(this@MainActivity)) { it.first } as MutableList<Pair<Long, MainRowItem>>)
+        mainVerticalGridView.adapter = mainVerticalAdapter
+
+        if (checkCallingOrSelfPermission(TvContractCompat.PERMISSION_READ_TV_LISTINGS) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(arrayOf(TvContractCompat.PERMISSION_READ_TV_LISTINGS), PERMISSION_TV_LISTINGS_REQUEST_CODE)
+        } else {
+            getListings()
         }
 
         settingButton.setOnClickListener {
@@ -78,6 +101,17 @@ class MainActivity : FragmentActivity(R.layout.activity_main) {
             addDataScheme("package")
         }
         registerReceiver(PackageReceiver(), intentFilter)
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        if (requestCode == PERMISSION_TV_LISTINGS_REQUEST_CODE) {
+            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                getListings()
+            }
+        } else {
+            super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        }
     }
 
     private fun onPackageInstalled(packageName: String) {
@@ -183,17 +217,14 @@ class MainActivity : FragmentActivity(R.layout.activity_main) {
         }
     }
 
+    private fun getListings() {
+        lifecycleScope.launch {
+            mainVerticalAdapter.addItems(getMainRows())
+        }
+    }
+
     private suspend fun getMainRows(): MutableList<Pair<Long, MainRowItem>> {
         val mainItems = mutableListOf<Pair<Long, MainRowItem>>()
-        val hiddenChannels = Suggestions.getHiddenChannels(this@MainActivity)
-
-        // Add favorites-row. Can't be hidden
-        mainItems.add(
-            Pair(
-                Channel.FAVORITE_APPS_ID,
-                MainRowItem(getString(R.string.favorites), favoritesAdapter)
-            )
-        )
 
         // Add watch next -row
         if (Channel.WATCH_NEXT_ID !in hiddenChannels) {
@@ -213,17 +244,6 @@ class MainActivity : FragmentActivity(R.layout.activity_main) {
         // Add preview channels from apps
         channels = Suggestions.getPreviewChannelsAsync(this@MainActivity)
         mainItems.addAll(getMainChannelRows(hiddenChannels))
-
-        // Add All apps -row
-        if (Channel.ALL_APPS_ID !in hiddenChannels) {
-            mainItems.add(
-                Pair(
-                    Channel.ALL_APPS_ID,
-                    MainRowItem(getString(R.string.other_apps), appsAdapter)
-                )
-            )
-        }
-
         return mainItems.orderSuggestions(Suggestions.getChannelOrder(this@MainActivity)) { it.first } as MutableList
     }
 
@@ -250,5 +270,9 @@ class MainActivity : FragmentActivity(R.layout.activity_main) {
             )
         }
         return mainItems
+    }
+
+    companion object {
+        const val PERMISSION_TV_LISTINGS_REQUEST_CODE = 0
     }
 }
