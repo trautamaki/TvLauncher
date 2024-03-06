@@ -147,7 +147,7 @@ class FavoritesAdapter(context: Context) : AppsAdapter(context) {
             return true
         }
 
-        showPopupMenu(app, R.menu.favorite_app_long_press)
+        app.showPopupMenu()
         return true
     }
 

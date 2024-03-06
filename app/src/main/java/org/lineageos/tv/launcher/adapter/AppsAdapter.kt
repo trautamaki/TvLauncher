@@ -57,7 +57,7 @@ open class AppsAdapter(protected val context: Context) :
     }
 
     protected open fun handleLongClick(app: Card): Boolean {
-        showPopupMenu(app, R.menu.app_long_press)
+        (app as AppCard).showPopupMenu()
         return true
     }
 
@@ -80,40 +80,6 @@ open class AppsAdapter(protected val context: Context) :
         itemView.descendantFocusability = ViewGroup.FOCUS_BLOCK_DESCENDANTS
 
         return ViewHolder(itemView)
-    }
-
-    protected fun showPopupMenu(anchorView: View, menuResId: Int) {
-        val popupMenu = PopupMenu(context, anchorView)
-        popupMenu.menuInflater.inflate(menuResId, popupMenu.menu)
-        popupMenu.setForceShowIcon(true)
-
-        popupMenu.setOnMenuItemClickListener { menuItem ->
-            when (menuItem.itemId) {
-                R.id.menu_uninstall -> {
-                    AppManager.uninstallApp(context, (anchorView as AppCard).packageName)
-                    true
-                }
-
-                R.id.menu_mark_as_favorite -> {
-                    AppManager.addFavoriteApp(context, (anchorView as AppCard).packageName)
-                    true
-                }
-
-                R.id.menu_remove_favorite -> {
-                    AppManager.removeFavoriteApp(context, (anchorView as AppCard).packageName)
-                    true
-                }
-
-                R.id.menu_move -> {
-                    FavoriteCard::class.safeCast(anchorView)?.setMoving()
-                    true
-                }
-
-                else -> false
-            }
-        }
-
-        popupMenu.show()
     }
 
     open fun removeItem(packageName: String) {
