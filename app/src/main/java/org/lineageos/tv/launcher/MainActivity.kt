@@ -1,11 +1,14 @@
 package org.lineageos.tv.launcher
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.widget.ImageButton
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.FragmentActivity
 import androidx.leanback.widget.VerticalGridView
 import androidx.lifecycle.lifecycleScope
@@ -29,6 +32,7 @@ class MainActivity : FragmentActivity() {
     private lateinit var mFavoritesAdapter: FavoritesAdapter
     private lateinit var mMainVerticalAdapter: MainVerticalAdapter
     private lateinit var mAllAppsAdapter: AppsAdapter
+    private lateinit var mIntentLauncher: ActivityResultLauncher<Intent>
 
     private lateinit var mChannels: List<PreviewChannel>
     private lateinit var mMainVerticalGridView: VerticalGridView
@@ -95,6 +99,10 @@ class MainActivity : FragmentActivity() {
         intentFilter.addAction(Intent.ACTION_PACKAGE_FULLY_REMOVED)
         intentFilter.addDataScheme("package")
         registerReceiver(PackageReceiver(), intentFilter)
+
+        mIntentLauncher =
+            registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {}
+        //requestDefaultLauncher()
     }
 
     override fun onDestroy() {
@@ -110,6 +118,13 @@ class MainActivity : FragmentActivity() {
             }
         } else {
             super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        }
+    }
+
+    private fun requestDefaultLauncher() {
+        val defaultLauncherIntent = AppManager.getSetDefaultLauncherIntent(this)
+        if (defaultLauncherIntent != null) {
+            mIntentLauncher.launch(defaultLauncherIntent)
         }
     }
 

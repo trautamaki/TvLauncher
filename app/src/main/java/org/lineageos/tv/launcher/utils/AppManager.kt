@@ -1,9 +1,11 @@
 package org.lineageos.tv.launcher.utils
 
 import android.app.Activity
+import android.app.role.RoleManager
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import androidx.core.content.getSystemService
 import org.lineageos.tv.launcher.MainActivity
 import org.lineageos.tv.launcher.model.AppInfo
 import org.lineageos.tv.launcher.model.Launchable
@@ -68,5 +70,13 @@ object AppManager {
         val packageUri = Uri.parse("package:$packageName")
         val uninstallIntent = Intent(Intent.ACTION_DELETE, packageUri)
         context.startActivity(uninstallIntent, null)
+    }
+
+    fun getSetDefaultLauncherIntent(context: Context): Intent? {
+        val roleManager = context.getSystemService<RoleManager>()
+        if (roleManager != null && !roleManager.isRoleHeld(RoleManager.ROLE_HOME)) {
+            return roleManager.createRequestRoleIntent(RoleManager.ROLE_HOME)
+        }
+        return null
     }
 }
