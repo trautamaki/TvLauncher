@@ -61,7 +61,8 @@ open class AppsAdapter(protected val context: Context) :
         return true
     }
 
-    protected open fun getaAppsList(): MutableList<Launchable> = AppManager.getInstalledApps(context)
+    protected open fun getaAppsList(): MutableList<Launchable> =
+        AppManager.getInstalledApps(context) as MutableList<Launchable>
 
     override fun onBindViewHolder(viewHolder: ViewHolder, i: Int) {
         (viewHolder.itemView as AppCard).setCardInfo(appsList[i])
