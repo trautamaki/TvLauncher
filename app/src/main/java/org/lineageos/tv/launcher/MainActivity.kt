@@ -103,6 +103,11 @@ class MainActivity : FragmentActivity(R.layout.activity_main) {
         registerReceiver(PackageReceiver(), intentFilter)
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        unregisterReceiver(PackageReceiver())
+    }
+
     override fun onRequestPermissionsResult(
         requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         if (requestCode == PERMISSION_TV_LISTINGS_REQUEST_CODE) {
